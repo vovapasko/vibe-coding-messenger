@@ -1,49 +1,94 @@
 import './App.css';
+import {useState, useEffect} from 'react';
+
+// Message component to display individual messages
+function Message({name, content, timestamp}) {
+    return (
+        <div className="message">
+            <div className="message-header">
+                <span className="message-name">{name}</span>
+                <span className="message-time">{timestamp}</span>
+            </div>
+            <div className="message-content">{content}</div>
+        </div>
+    );
+}
 
 export default function WriteMessage() {
-    function handleSubmit(e) {
-        // Prevent the browser from reloading the page
-        e.preventDefault();
+    const [messages, setMessages] = useState([]);
 
-        // Read the form data
+    // Load messages from sessionStorage on component mount
+    useEffect(() => {
+        const savedMessages = sessionStorage.getItem("chatMessages");
+        if (savedMessages) {
+            setMessages(JSON.parse(savedMessages));
+        }
+    }, []);
+
+    function handleSubmit(e) {
+        e.preventDefault();
         const form = e.target;
         const formData = new FormData(form);
-
-
-        // Or you can work with it as a plain object:
         const formJson = Object.fromEntries(formData.entries());
-        // Save the name to sessionStorage
+
+        // Save the name to sessionStorage if provided
         if (formJson.chatterName && formJson.chatterName !== "Anonymous") {
             sessionStorage.setItem("chatterName", formJson.chatterName);
         }
-        console.log(formJson);
+
+        // Create a new message object
+        const newMessage = {
+            name: formJson.chatterName || "Anonymous",
+            content: formJson.messageContent,
+            timestamp: new Date().toLocaleTimeString(),
+        };
+
+        // Update messages state and save to sessionStorage
+        const updatedMessages = [...messages, newMessage];
+        setMessages(updatedMessages);
+        sessionStorage.setItem("chatMessages", JSON.stringify(updatedMessages));
+
+        // Reset the message content field
+        form.reset();
     }
 
     function getValueFromSession() {
-        // checks if there is a participant name in the session storage,
-        // if there is, return the participant name
-        // if there isn't, return an "Anonymous"
-        if (!sessionStorage.getItem("chatterName")) {
-            return "Anonymous";
-        }
-        return sessionStorage.getItem("chatterName");
+        return sessionStorage.getItem("chatterName") || "Anonymous";
     }
 
     return (
-        <form method="post" onSubmit={handleSubmit}>
-            <label>
-                Name: <input name="chatterName" defaultValue={getValueFromSession()}/>
-            </label>
-            <label>
-                Write message >
-                <textarea
-                    name="messageContent"
-                    rows={4}
-                    cols={40}
-                />
-            </label>
-            <hr/>
-            <button type="submit">Send</button>
-        </form>
+        <div className="chat-container">
+            <div className="chat-history">
+                {messages.length > 0 ? (
+                    messages.map((message, index) => (
+                        <Message
+                            key={index}
+                            name={message.name}
+                            content={message.content}
+                            timestamp={message.timestamp}
+                        />
+                    ))
+                ) : (
+                    <div className="no-messages">No messages yet. Start the conversation!</div>
+                )}
+            </div>
+
+            <form method="post" onSubmit={handleSubmit} className="message-form">
+                <label>
+                    Name: <input name="chatterName" defaultValue={getValueFromSession()}/>
+                </label>
+                <label>
+                    Write message >
+                    <textarea
+                        name="messageContent"
+                        rows={4}
+                        cols={40}
+                        required
+                    />
+                </label>
+                <hr/>
+                <button type="submit">Send</button>
+            </form>
+        </div>
     );
 }
