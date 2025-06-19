@@ -1,8 +1,8 @@
 import './App.css';
-import {useState, useEffect} from 'react';
+import { useState, useEffect, useRef } from 'react';
 
-// Message component to display individual messages
-function Message({name, content, timestamp}) {
+// Message component remains the same
+function Message({ name, content, timestamp }) {
     return (
         <div className="message">
             <div className="message-header">
@@ -16,8 +16,8 @@ function Message({name, content, timestamp}) {
 
 export default function WriteMessage() {
     const [messages, setMessages] = useState([]);
+    const textareaRef = useRef(null);
 
-    // Load messages from sessionStorage on component mount
     useEffect(() => {
         const savedMessages = sessionStorage.getItem("chatMessages");
         if (savedMessages) {
@@ -25,36 +25,42 @@ export default function WriteMessage() {
         }
     }, []);
 
-    function handleSubmit(e) {
+    const handleSubmit = (e) => {
         e.preventDefault();
         const form = e.target;
         const formData = new FormData(form);
         const formJson = Object.fromEntries(formData.entries());
 
-        // Save the name to sessionStorage if provided
+        if (!formJson.messageContent?.trim()) return; // Don't submit empty messages
+
         if (formJson.chatterName && formJson.chatterName !== "Anonymous") {
             sessionStorage.setItem("chatterName", formJson.chatterName);
         }
 
-        // Create a new message object
         const newMessage = {
             name: formJson.chatterName || "Anonymous",
             content: formJson.messageContent,
             timestamp: new Date().toLocaleTimeString(),
         };
 
-        // Update messages state and save to sessionStorage
         const updatedMessages = [...messages, newMessage];
         setMessages(updatedMessages);
         sessionStorage.setItem("chatMessages", JSON.stringify(updatedMessages));
 
-        // Reset the message content field
         form.reset();
-    }
+    };
 
-    function getValueFromSession() {
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            const form = e.target.form;
+            form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+        }
+    };
+
+    const getValueFromSession = () => {
         return sessionStorage.getItem("chatterName") || "Anonymous";
-    }
+    };
 
     return (
         <div className="chat-container">
@@ -74,19 +80,20 @@ export default function WriteMessage() {
             </div>
 
             <form method="post" onSubmit={handleSubmit} className="message-form">
-                <label>
-                    Name: <input name="chatterName" defaultValue={getValueFromSession()}/>
+                <label className="name-label">
+                    Name: <input name="chatterName" defaultValue={getValueFromSession()} />
                 </label>
-                <label>
-                    Write message >
+                <div className="textarea-container">
+                    <label className="message-label">Write message</label>
                     <textarea
+                        ref={textareaRef}
                         name="messageContent"
                         rows={4}
                         cols={40}
                         required
+                        onKeyDown={handleKeyDown}
                     />
-                </label>
-                <hr/>
+                </div>
                 <button type="submit">Send</button>
             </form>
         </div>
