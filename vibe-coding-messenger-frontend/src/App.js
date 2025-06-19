@@ -16,13 +16,42 @@ function Message({ name, content, timestamp }) {
 
 export default function WriteMessage() {
     const [messages, setMessages] = useState([]);
+    const [socket, setSocket] = useState(null);
     const textareaRef = useRef(null);
 
     useEffect(() => {
+        // Initialize WebSocket connection
+        const ws = new WebSocket('ws://localhost:8080/ws');
+        setSocket(ws);
+
+        // Load saved messages
         const savedMessages = sessionStorage.getItem("chatMessages");
         if (savedMessages) {
             setMessages(JSON.parse(savedMessages));
         }
+
+        // WebSocket event handlers
+        ws.onopen = () => {
+            console.log('Connected to WebSocket server');
+        };
+
+        ws.onmessage = (event) => {
+            const newMessage = {
+                name: "Server",
+                content: event.data,
+                timestamp: new Date().toLocaleTimeString(),
+            };
+            setMessages(prev => [...prev, newMessage]);
+        };
+
+        ws.onclose = () => {
+            console.log('Disconnected from WebSocket server');
+        };
+
+        // Clean up on component unmount
+        return () => {
+            ws.close();
+        };
     }, []);
 
     const handleSubmit = (e) => {
@@ -31,7 +60,7 @@ export default function WriteMessage() {
         const formData = new FormData(form);
         const formJson = Object.fromEntries(formData.entries());
 
-        if (!formJson.messageContent?.trim()) return; // Don't submit empty messages
+        if (!formJson.messageContent?.trim()) return;
 
         if (formJson.chatterName && formJson.chatterName !== "Anonymous") {
             sessionStorage.setItem("chatterName", formJson.chatterName);
@@ -43,9 +72,14 @@ export default function WriteMessage() {
             timestamp: new Date().toLocaleTimeString(),
         };
 
-        const updatedMessages = [...messages, newMessage];
-        setMessages(updatedMessages);
-        sessionStorage.setItem("chatMessages", JSON.stringify(updatedMessages));
+        // Send message via WebSocket
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(newMessage.content);
+        }
+
+        // Update local state
+        setMessages(prev => [...prev, newMessage]);
+        sessionStorage.setItem("chatMessages", JSON.stringify([...messages, newMessage]));
 
         form.reset();
     };
