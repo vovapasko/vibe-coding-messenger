@@ -1,8 +1,8 @@
-# 📨 Real-Time Collaboration App (MVP)
+# 📨 Vibe coding messenger (MVP)
 
 ## 🧠 Overview
 
-This project is a real-time messaging platform built with **React (frontend)** and **Kotlin (backend)**. It allows authenticated users to send and receive messages instantly. The goal is to create a clean, interactive MVP that can be expanded later with advanced security and messaging features.
+This project is a real-time messaging platform built with **React (frontend)** and **Kotlin (backend)**. It allows authenticated users to send and receive messages instantly. The goal is to create a clean, interactive MVP that can be expanded later with advanced security and messaging features. Partner in crime: GPT-4.1
 
 ---
 
