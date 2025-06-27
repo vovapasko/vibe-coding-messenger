@@ -21,7 +21,7 @@ export default function WriteMessage() {
 
     useEffect(() => {
         // Initialize WebSocket connection
-        const ws = new WebSocket('ws://localhost:8080/ws');
+        const ws = new WebSocket('ws://localhost:8080/chat');
         setSocket(ws);
 
         // Load saved messages
@@ -67,14 +67,16 @@ export default function WriteMessage() {
         }
 
         const newMessage = {
-            name: formJson.chatterName || "Anonymous",
+            user: formJson.chatterName || "Anonymous",
             content: formJson.messageContent,
-            timestamp: new Date().toLocaleTimeString(),
+            timestamp: Math.floor(Date.now() / 1000),
         };
 
         // Send message via WebSocket
         if (socket && socket.readyState === WebSocket.OPEN) {
-            socket.send(newMessage.content);
+            let message = JSON.stringify(newMessage);
+            console.log(`Sending message ${message} via WebSocket`);
+            socket.send(message);
         }
 
         // Update local state
@@ -103,7 +105,7 @@ export default function WriteMessage() {
                     messages.map((message, index) => (
                         <Message
                             key={index}
-                            name={message.name}
+                            name={message.user}
                             content={message.content}
                             timestamp={message.timestamp}
                         />
