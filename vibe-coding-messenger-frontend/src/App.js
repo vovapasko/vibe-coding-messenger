@@ -72,7 +72,7 @@ export default function WriteMessage() {
             timestamp: Math.floor(Date.now() / 1000),
         };
 
-        // Send message via WebSocket
+        // Send a message via WebSocket
         if (socket && socket.readyState === WebSocket.OPEN) {
             let message = JSON.stringify(newMessage);
             console.log(`Sending message ${message} via WebSocket`);
@@ -84,6 +84,12 @@ export default function WriteMessage() {
         sessionStorage.setItem("chatMessages", JSON.stringify([...messages, newMessage]));
 
         form.reset();
+    };
+
+    // Add this function
+    const handleClearMessages = () => {
+        setMessages([]);
+        sessionStorage.removeItem("chatMessages");
     };
 
     const handleKeyDown = (e) => {
@@ -131,6 +137,14 @@ export default function WriteMessage() {
                     />
                 </div>
                 <button type="submit">Send</button>
+                {/* Add the Clear button here */}
+                <button
+                    type="button"
+                    onClick={handleClearMessages}
+                    style={{ marginLeft: '8px' }}
+                >
+                    Clear
+                </button>
             </form>
         </div>
     );
