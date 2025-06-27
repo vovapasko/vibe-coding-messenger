@@ -14,7 +14,7 @@ import kotlin.time.Duration.Companion.seconds
 
 fun Application.configureSockets() {
     install(WebSockets) {
-        contentConverter = KotlinxWebsocketSerializationConverter(Json)
+        contentConverter = KotlinxWebsocketSerializationConverter(Json{ ignoreUnknownKeys = true})
         pingPeriod = 15.seconds
         timeout = 15.seconds
         maxFrameSize = Long.MAX_VALUE
@@ -25,15 +25,31 @@ fun Application.configureSockets() {
 
         webSocket("/chat") { // websocketSession
             sessions.add(this)
-            sendAllMessages()
-
-            while (true) {
-                val newMessage = receiveDeserialized<Message>()
-                MessageRepository.addMessage(newMessage)
-                for (session in sessions) {
-                    session.sendSerialized(newMessage)
+            try {
+                sendAllMessages()
+                while (true) {
+                    val newMessage = receiveDeserialized<Message>()
+                    MessageRepository.addMessage(newMessage)
+                    // Send the message to all open sessions
+                    val it = sessions.iterator()
+                    while (it.hasNext()) {
+                        val session = it.next()
+                        try {
+                            session.sendSerialized(newMessage)
+                        } catch (e: Exception) {
+                            println(e.printStackTrace())
+                            it.remove()
+                        }
+                    }
                 }
+            } catch (e: Exception) {
+                // handle/log if needed
+                println(e.printStackTrace())
+            } finally {
+                // Ensure removal of the session when done
+                sessions.remove(this)
             }
+
         }
     }
 }
@@ -41,6 +57,5 @@ fun Application.configureSockets() {
 private suspend fun DefaultWebSocketServerSession.sendAllMessages() {
     for (message in MessageRepository.getAllMessages()) {
         sendSerialized(message)
-        delay(1000)
     }
 }
