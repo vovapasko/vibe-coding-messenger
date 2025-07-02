@@ -31,8 +31,8 @@ This project is a real-time messaging platform built with **React (frontend)** a
 - [ ] Login form (username + password)
 - [ ] Registration form
 - [ ] Chat interface:
-  - [ ] Real-time message display
-  - [ ] Message input & send button
+  - [x] Real-time message display
+  - [x] Message input & send button
   - [ ] Timestamps and sender tags
   - [ ] Auto-scroll to latest message
 - [ ] User online status (basic)
