@@ -24,23 +24,15 @@ export default function WriteMessage() {
         const ws = new WebSocket('ws://localhost:8080/chat');
         setSocket(ws);
 
-        // Load saved messages
-        const savedMessages = sessionStorage.getItem("chatMessages");
-        if (savedMessages) {
-            setMessages(JSON.parse(savedMessages));
-        }
-
         // WebSocket event handlers
         ws.onopen = () => {
             console.log('Connected to WebSocket server');
         };
 
         ws.onmessage = (event) => {
-            const newMessage = {
-                name: "Server",
-                content: event.data,
-                timestamp: new Date().toLocaleTimeString(),
-            };
+
+            const newMessage = JSON.parse(event.data);
+
             setMessages(prev => [...prev, newMessage]);
         };
 
@@ -62,10 +54,6 @@ export default function WriteMessage() {
 
         if (!formJson.messageContent?.trim()) return;
 
-        if (formJson.chatterName && formJson.chatterName !== "Anonymous") {
-            sessionStorage.setItem("chatterName", formJson.chatterName);
-        }
-
         const newMessage = {
             user: formJson.chatterName || "Anonymous",
             content: formJson.messageContent,
@@ -78,10 +66,6 @@ export default function WriteMessage() {
             console.log(`Sending message ${message} via WebSocket`);
             socket.send(message);
         }
-
-        // Update local state
-        setMessages(prev => [...prev, newMessage]);
-        sessionStorage.setItem("chatMessages", JSON.stringify([...messages, newMessage]));
 
         form.reset();
     };
@@ -100,7 +84,7 @@ export default function WriteMessage() {
         }
     };
 
-    const getValueFromSession = () => {
+    const getChatterNameFromSession = () => {
         return sessionStorage.getItem("chatterName") || "Anonymous";
     };
 
@@ -123,7 +107,7 @@ export default function WriteMessage() {
 
             <form method="post" onSubmit={handleSubmit} className="message-form">
                 <label className="name-label">
-                    Name: <input name="chatterName" defaultValue={getValueFromSession()} />
+                    Name: <input name="chatterName" defaultValue={getChatterNameFromSession()} />
                 </label>
                 <div className="textarea-container">
                     <label className="message-label">Write message</label>
